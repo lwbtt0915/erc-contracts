@@ -12,7 +12,7 @@ remappings = [
 ]
 
 [rpc_endpoints]
-sepolia = "https://sepolia.infura.io/v3/YOUR_KEY"
+sepolia = "https://sepolia.infura.io/v3/2aea525cf6c144f98d5890d11fa7e208"
 mainnet = "https://mainnet.infura.io/v3/YOUR_KEY"
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
