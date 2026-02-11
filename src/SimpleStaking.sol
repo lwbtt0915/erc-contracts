@@ -12,13 +12,13 @@ contract SimpleStaking {
     struct StakeInfo {
         uint256 amount;                  // 质押数量
         uint256 rewardDebt;              // 已经领取的奖励
-        uint256 lastUpdate               // 上次更新奖励的时间
+        uint256 lastUpdate;               // 上次更新奖励的时间
     }
 
     mapping(address => StakeInfo) public users;
 
-    constructor(IERC20 _stakingToken, uint256 _rewardRate) {
-        stakingToken = _stakingToken;
+    constructor(address _stakingToken, uint256 _rewardRate) {
+        stakingToken = IERC20(_stakingToken);
         rewardRate = _rewardRate;
     }
    
@@ -33,22 +33,27 @@ contract SimpleStaking {
 
       _updateReward(msg.sender);
       users[msg.sender].amount += amount;
-      users[msg.sender].startTime = block.timestamp;
+      users[msg.sender].lastUpdate = block.timestamp;
 
-      stakingToken.transferFrom(msg.sender, address(this), amount);
+      bool success = stakingToken.transferFrom(msg.sender, address(this), amount);
+      require(success, "transferFrom failed");
    }
 
 
 
-//    提币取回本金
+//    取回本金
+// 1️⃣ 先结算奖励
+// 2️⃣ 再减少本金
+// 3️⃣ 转账
    function withdraw(uint256 amount) external { 
-      UserInfo storage user = users[msg.sender];
+      StakeInfo storage user = users[msg.sender];
       require(user.amount >= amount, "withdraw: not enough");
 
       _updateReward(msg.sender);
 
       user.amount -= amount;
-      stakingToken.transfer(msg.sender, amount);
+      bool success = stakingToken.transfer(msg.sender, amount);
+      require(success, "transfer failed");
    }
 
 
@@ -56,17 +61,18 @@ contract SimpleStaking {
    function claimReward() external {
       _updateReward(msg.sender);
 
-      UserInfo storage user = users[msg.sender];
+      StakeInfo storage user = users[msg.sender];
       require(user.rewardDebt > 0, "no reward");
 
       users[msg.sender].rewardDebt = 0;
-      stakingToken.transfer(msg.sender, user.rewardDebt);
+      bool success = rewardToken.transfer(msg.sender, user.rewardDebt);
+      require(success, "transfer failed");
    }
 
 
 
    function pendingReward(address userAddr) internal view returns (uint256 pending) {
-      UserInfo memory user = users[userAddr];
+      StakeInfo memory user = users[userAddr];
       if (user.amount == 0) return user.rewardDebt;
 
      uint256 timePassed = block.timestamp - user.lastUpdate;
@@ -81,7 +87,7 @@ contract SimpleStaking {
     // 2️⃣ 按公式算出奖励
    // 3️⃣ 把奖励累加到 rewardDebt
    function _updateReward(address userAddr) internal {
-      UserInfo storage user = users[userAddr];
+      StakeInfo storage user = users[userAddr];
       
 
       if(user.amount > 0) {

@@ -2,7 +2,7 @@
 // script/TransferERC20.s.sol
 pragma solidity ^0.8.20;
 
-import "forge-std/Script.sol";
+import {Script} from "forge-std/Script.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract TransferERC20 is Script {
@@ -12,7 +12,8 @@ contract TransferERC20 is Script {
         uint256 amount = 1e18;
 
         vm.startBroadcast();
-        IERC20(token).transfer(to, amount);
+        bool success = IERC20(token).transfer(to, amount);
+        require(success, "Transfer failed");
         vm.stopBroadcast();
     }
 }

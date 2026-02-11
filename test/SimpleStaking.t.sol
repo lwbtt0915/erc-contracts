@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
-import "../src/SimpleStaking.sol";
-import "../src/MockERC20.sol";
+import {Test} from "forge-std/Test.sol";
+import {SimpleStaking} from "../src/SimpleStaking.sol";
+import {MockERC20} from "../src/MockERC20.sol";
 import {console} from "forge-std/console.sol";
 
 contract SimpleStakingTest is Test {
@@ -12,10 +12,11 @@ contract SimpleStakingTest is Test {
     address user = address(1);
 
     function setUp() public {
-        token = new MockERC20();
-        staking = new SimpleStaking(token, 1e16); // 每秒 0.01 token
+        token = new MockERC20("MyToken", "MTK");
+        staking = new SimpleStaking(address(token), 1e16); // 每秒 0.01 token
 
-        token.transfer(user, 100 ether);
+        bool success = token.transfer(user, 100 ether);
+        require(success, "Transfer failed");
     }
 
     function testStakeAndClaim() public {
@@ -26,7 +27,7 @@ contract SimpleStakingTest is Test {
 
         vm.warp(block.timestamp + 100); // 快进 100 秒
 
-        staking.claim();
+        staking.claimReward();
         vm.stopPrank();
 
         uint256 balance = token.balanceOf(user);
